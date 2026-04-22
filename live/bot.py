@@ -18,7 +18,7 @@ import state as st
 import alerts
 import commander
 from data    import fetch_candles, get_mid_price
-from signals import compute_signal
+from signals import compute_signal, assert_strategy_parity
 from executor import execute_buy, execute_sell
 
 # ── Logging setup ─────────────────────────────────────────────────────────────
@@ -146,6 +146,25 @@ def main():
 
     if not config.DRY_RUN and not config.PRIVATE_KEY:
         log.error("LIVE mode requires HL_PRIVATE_KEY to be set. Aborting.")
+        sys.exit(1)
+
+    # ── Strategy parity guard ─────────────────────────────────────────────────
+    # Raises immediately if config.py params deviate from the backtested values.
+    # This prevents silent drift between live and research code.
+    try:
+        assert_strategy_parity()
+        log.info("Strategy parity check PASSED — config matches backtested params")
+    except RuntimeError as e:
+        log.error(str(e))
+        sys.exit(1)
+
+    # ── Warmup guard ──────────────────────────────────────────────────────────
+    min_required = config.MACD_SLOW + config.MACD_SIG + 5
+    if config.LOOKBACK_BARS < min_required:
+        log.error(
+            f"LOOKBACK_BARS={config.LOOKBACK_BARS} is too small — "
+            f"need at least {min_required} bars for MACD warmup."
+        )
         sys.exit(1)
 
     position_state = st.load()

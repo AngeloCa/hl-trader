@@ -103,9 +103,11 @@ def compute_signal(df: pd.DataFrame) -> tuple[str, dict]:
     signal : 'buy' | 'sell' | 'hold'
     debug  : dict of indicator values for logging
     """
-    min_bars = max(PSAR_START and 10, MACD_SLOW + MACD_SIG + 5)
+    # Minimum bars for MACD(fast, slow, sig) warmup + 5 safety margin
+    # PSAR needs only 3 bars; MACD dominates at slow+sig+5 = 38
+    min_bars = MACD_SLOW + MACD_SIG + 5
     if len(df) < min_bars:
-        return "hold", {"reason": "insufficient data"}
+        return "hold", {"reason": f"insufficient data ({len(df)}<{min_bars})"}
 
     dire = _psar(df)
     hist = _macd_hist(df["close"].values)
@@ -140,3 +142,38 @@ def compute_signal(df: pd.DataFrame) -> tuple[str, dict]:
         return "sell", {**debug, "reason": reason}
 
     return "hold", {**debug, "reason": "no signal"}
+
+
+# ── Tested parameter values (must match strategy3.py winner) ─────────────────
+_TESTED = {
+    "PSAR_START": 0.02,
+    "PSAR_STEP":  0.01,
+    "PSAR_MAX":   0.2,
+    "MACD_FAST":  8,
+    "MACD_SLOW":  26,
+    "MACD_SIG":   7,
+}
+
+def assert_strategy_parity():
+    """
+    Hard assertion: raise immediately if any config param deviates from the
+    backtested values. Call once at bot startup before any trading begins.
+    """
+    live = {
+        "PSAR_START": PSAR_START,
+        "PSAR_STEP":  PSAR_STEP,
+        "PSAR_MAX":   PSAR_MAX,
+        "MACD_FAST":  MACD_FAST,
+        "MACD_SLOW":  MACD_SLOW,
+        "MACD_SIG":   MACD_SIG,
+    }
+    mismatches = [
+        f"{k}: live={live[k]!r}  tested={_TESTED[k]!r}"
+        for k in _TESTED if live[k] != _TESTED[k]
+    ]
+    if mismatches:
+        raise RuntimeError(
+            "STRATEGY PARITY VIOLATION — live config diverges from backtested params:\n"
+            + "\n".join(f"  {m}" for m in mismatches)
+            + "\nUpdate config.py to match the tested values or re-run the backtest."
+        )
