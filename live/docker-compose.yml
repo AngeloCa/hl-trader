@@ -1,0 +1,25 @@
+services:
+  bot:
+    build: .
+    container_name: hype_bot
+    restart: unless-stopped          # survives VPS reboots and crashes
+
+    env_file:
+      - .env                         # HL_PRIVATE_KEY, HL_WALLET_ADDR, DRY_RUN
+
+    volumes:
+      - ./data:/app/data             # state.json + bot.log persist on host
+
+    # Resource limits — bot is lightweight
+    mem_limit: 256m
+    cpus: "0.5"
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+    # Readable container time
+    environment:
+      - TZ=UTC

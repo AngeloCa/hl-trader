@@ -1,0 +1,38 @@
+2026-04-22 15:31:50  INFO      bot  ============================================================
+2026-04-22 15:31:50  INFO      bot    HYPE/USDC Bot  |  DRY-RUN
+2026-04-22 15:31:50  INFO      bot    Strategy : ST(ATR7/×1.5) + MACD(8,21,9)
+2026-04-22 15:31:50  INFO      bot    Capital  : $1,000 USDC  |  Max position: $945
+2026-04-22 15:31:50  INFO      bot  ============================================================
+2026-04-22 15:31:50  INFO      bot  ─── Cycle at 2026-04-22 15:31 UTC ───
+2026-04-22 15:31:50  INFO      bot  Fetching candles...
+2026-04-22 15:31:51  INFO      bot  Got 150 bars  (2026-03-28 → 2026-04-22)
+2026-04-22 15:31:51  INFO      bot  Signal: BUY   |  {'close': 41.058, 'st_direction': 1, 'st_flip_bull': np.True_, 'st_flip_bear': np.False_, 'macd_hist': 0.17231258753028844, 'macd_flip_neg': np.False_, 'macd_positive': np.True_, 'reason': 'ST bullish flip + MACD positive'}
+2026-04-22 15:31:51  INFO      bot  Opening LONG position...
+2026-04-22 15:31:51  INFO      executor  BUY signal | mid=40.9875 | spending $945.00 → 23.0558 HYPE
+2026-04-22 15:31:51  INFO      executor  [DRY-RUN] BUY 23.0558 HYPE @ 41.1105  (notional $947.83)
+2026-04-22 15:31:51  INFO      bot  LONG opened: 23.0558 HYPE @ $40.9875  ($945.00)
+2026-04-22 15:31:52  INFO      bot  Portfolio: CASH  |  HYPE mid=$40.9875
+2026-04-22 15:31:52  INFO      bot  Sleeping 29.6 min until next candle check (16:01 UTC)
+2026-04-22 15:46:09  INFO      bot  ============================================================
+2026-04-22 15:46:09  INFO      bot    HYPE/USDC Bot  |  DRY-RUN
+2026-04-22 15:46:09  INFO      bot    Strategy : ST(ATR7/×1.5) + MACD(8,21,9)
+2026-04-22 15:46:09  INFO      bot    Capital  : $1,000 USDC  |  Max position: $945
+2026-04-22 15:46:09  INFO      bot  ============================================================
+2026-04-22 15:46:09  INFO      state  State loaded: position=long entry=40.9875 qty=23.055809698078683
+2026-04-22 15:46:09  INFO      commander  Telegram command listener started
+2026-04-22 15:46:09  INFO      bot  ─── Cycle at 2026-04-22 15:46 UTC ───
+2026-04-22 15:46:09  INFO      bot  Fetching candles...
+2026-04-22 15:46:09  INFO      commander  TG command: /start
+2026-04-22 15:46:09  INFO      bot  Got 150 bars  (2026-03-28 → 2026-04-22)
+2026-04-22 15:46:09  INFO      bot  Signal: BUY   |  {'close': 41.058, 'st_direction': 1, 'st_flip_bull': np.True_, 'st_flip_bear': np.False_, 'macd_hist': 0.17231258753028844, 'macd_flip_neg': np.False_, 'macd_positive': np.True_, 'reason': 'ST bullish flip + MACD positive'}
+2026-04-22 15:46:09  INFO      bot  BUY signal but already long — hold
+2026-04-22 15:46:09  INFO      bot  Portfolio: LONG 23.0558 HYPE  entry=$40.9875  mid=$41.0960  unrealised=+0.26%
+2026-04-22 15:46:09  INFO      bot  Sleeping 15.3 min until next candle check (16:01 UTC)
+2026-04-22 15:47:07  INFO      commander  TG command: /status
+2026-04-22 15:47:07  INFO      state  State loaded: position=long entry=40.9875 qty=23.055809698078683
+2026-04-22 16:01:30  INFO      bot  ─── Cycle at 2026-04-22 16:01 UTC ───
+2026-04-22 16:01:30  INFO      bot  Fetching candles...
+2026-04-22 16:01:30  INFO      bot  Got 150 bars  (2026-03-28 → 2026-04-22)
+2026-04-22 16:01:30  INFO      bot  Signal: HOLD  |  {'close': 40.971, 'st_direction': 1, 'st_flip_bull': np.False_, 'st_flip_bear': np.False_, 'macd_hist': 0.24473861472241287, 'macd_flip_neg': np.False_, 'macd_positive': np.True_, 'reason': 'no signal'}
+2026-04-22 16:01:30  INFO      bot  Portfolio: LONG 23.0558 HYPE  entry=$40.9875  mid=$41.0025  unrealised=+0.04%
+2026-04-22 16:01:30  INFO      bot  Sleeping 240.0 min until next candle check (20:01 UTC)

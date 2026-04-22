@@ -1,0 +1,21 @@
+2026-04-22 15:08:39  INFO      bot  ============================================================
+2026-04-22 15:08:39  INFO      bot    HYPE/USDC Bot  |  DRY-RUN
+2026-04-22 15:08:39  INFO      bot    Strategy : ST(ATR7/×1.5) + MACD(8,21,9)
+2026-04-22 15:08:39  INFO      bot    Capital  : $1,000 USDC  |  Max position: $945
+2026-04-22 15:08:39  INFO      bot  ============================================================
+2026-04-22 15:08:39  INFO      bot  ─── Cycle at 2026-04-22 15:08 UTC ───
+2026-04-22 15:08:39  INFO      bot  Fetching candles...
+2026-04-22 15:08:39  INFO      bot  Got 150 bars  (2026-03-28 → 2026-04-22)
+2026-04-22 15:08:39  INFO      bot  Signal: BUY   |  {'close': 41.058, 'st_direction': 1, 'st_flip_bull': np.True_, 'st_flip_bear': np.False_, 'macd_hist': 0.17231258753028844, 'macd_flip_neg': np.False_, 'macd_positive': np.True_, 'reason': 'ST bullish flip + MACD positive'}
+2026-04-22 15:08:39  INFO      bot  Opening LONG position...
+2026-04-22 15:08:39  INFO      executor  BUY signal | mid=40.8265 | spending $945.00 → 23.1467 HYPE
+2026-04-22 15:08:39  INFO      executor  [DRY-RUN] BUY 23.1467 HYPE @ 40.9490  (notional $947.83)
+2026-04-22 15:08:39  INFO      bot  LONG opened: 23.1467 HYPE @ $40.8265  ($945.00)
+2026-04-22 15:08:39  INFO      bot  Portfolio: CASH  |  HYPE mid=$40.8265
+2026-04-22 15:08:39  INFO      bot  Sleeping 52.8 min until next candle check (16:01 UTC)
+2026-04-22 16:01:30  INFO      bot  ─── Cycle at 2026-04-22 16:01 UTC ───
+2026-04-22 16:01:30  INFO      bot  Fetching candles...
+2026-04-22 16:01:30  INFO      bot  Got 150 bars  (2026-03-28 → 2026-04-22)
+2026-04-22 16:01:30  INFO      bot  Signal: HOLD  |  {'close': 40.971, 'st_direction': 1, 'st_flip_bull': np.False_, 'st_flip_bear': np.False_, 'macd_hist': 0.24473861472241287, 'macd_flip_neg': np.False_, 'macd_positive': np.True_, 'reason': 'no signal'}
+2026-04-22 16:01:30  INFO      bot  Portfolio: LONG 23.1467 HYPE  entry=$40.8265  mid=$41.0025  unrealised=+0.43%
+2026-04-22 16:01:30  INFO      bot  Sleeping 240.0 min until next candle check (20:01 UTC)

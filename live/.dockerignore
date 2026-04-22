@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+data/
+__pycache__/
+*.pyc
+*.log
+state.json
+.venv/
+run.sh
