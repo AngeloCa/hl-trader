@@ -172,13 +172,42 @@ def main():
     # Start Telegram command listener
     commander.start()
 
-    # Run immediately once, then on schedule
-    first_run = True
+    # ── Startup protective sell ───────────────────────────────────────────────
+    # On restart, immediately check for a SELL signal to protect any open
+    # position — a sell that fired at the last bar close may be hours overdue.
+    # BUY signals are suppressed on startup: we never enter on a signal that is
+    # up to 4h stale (the backtest assumes entry at bar close, not hours later).
+    log.info("Startup: checking for overdue SELL signal...")
+    try:
+        from data import fetch_candles
+        df_startup = fetch_candles()
+        sig_startup, dbg_startup = compute_signal(df_startup)
+        log.info(f"Startup signal: {sig_startup.upper()}  |  {dbg_startup}")
+        if sig_startup == "sell" and position_state["position"] == "long":
+            log.info("Startup SELL: closing overdue position...")
+            qty    = position_state.get("qty_hype")
+            result = execute_sell(config.WALLET_ADDR, qty)
+            if result["status"] == "ok":
+                exit_price  = result["price"]
+                entry_price = position_state["entry_price"]
+                pnl_pct     = (exit_price - entry_price) / entry_price * 100 if entry_price else None
+                position_state = st.exit_long(position_state, exit_price)
+                log.info(f"Startup SELL closed @ ${exit_price:.4f}  P&L: {pnl_pct:+.2f}%")
+                alerts.trade_alert("sell", exit_price, qty or 0, pnl_pct, config.DRY_RUN)
+                alerts.send("⚠️ <b>Startup SELL</b>: closed overdue position on restart.")
+            else:
+                log.warning(f"Startup SELL failed: {result.get('reason')}")
+        elif sig_startup == "buy" and position_state["position"] == "none":
+            log.info("Startup BUY signal suppressed — waiting for next bar close "
+                     "(signal may be up to 4h stale; backtest assumes entry at bar close)")
+        else:
+            log.info("Startup: no action needed — sleeping until next bar close")
+    except Exception as e:
+        log.warning(f"Startup check failed (non-fatal): {e}")
 
     while True:
         try:
-            if not first_run:
-                sleep_until(next_bar_close_ts())
+            sleep_until(next_bar_close_ts())
 
             # ── Handle Telegram /close command ───────────────────────────────
             if commander.close_event.is_set():
@@ -205,7 +234,6 @@ def main():
 
             log.info(f"─── Cycle at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} ───")
             position_state = run_cycle(position_state)
-            first_run      = False
 
         except KeyboardInterrupt:
             log.info("Interrupted by user — shutting down.")
