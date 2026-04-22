@@ -1,59 +1,97 @@
 """
-Signal engine — identical math to the backtested strategy.
+Signal engine — Strategy 3: Parabolic SAR + MACD
+Identical math to the backtested strategy3.py.
+
 Input : DataFrame with columns [open, high, low, close, volume]
 Output: 'buy' | 'sell' | 'hold'
+
+BUY  : PSAR flips bullish (was above price → flips below)
+        AND MACD histogram > 0
+SELL : PSAR flips bearish (was below price → flips above)
+        OR MACD histogram turns negative (crosses below zero)
 """
 import numpy as np
 import pandas as pd
-from config import ATR_PERIOD, ST_MULT, MACD_FAST, MACD_SLOW, MACD_SIG
+from config import PSAR_START, PSAR_STEP, PSAR_MAX, MACD_FAST, MACD_SLOW, MACD_SIG
 
 
-def _atr(df: pd.DataFrame, period: int) -> np.ndarray:
-    h, l, c = df["high"].values, df["low"].values, df["close"].values
-    pc  = np.concatenate([[c[0]], c[:-1]])
-    tr  = np.maximum(h - l, np.maximum(np.abs(h - pc), np.abs(l - pc)))
-    out = np.full(len(tr), np.nan)
-    out[period - 1] = tr[:period].mean()
-    a   = 1.0 / period
-    for i in range(period, len(tr)):
-        out[i] = out[i-1] * (1 - a) + tr[i] * a
-    return out
+def _psar(df: pd.DataFrame) -> np.ndarray:
+    """
+    Wilder Parabolic SAR.
+    Returns direction array: +1 bullish, -1 bearish, 0 warmup.
+    """
+    high  = df["high"].values
+    low   = df["low"].values
+    close = df["close"].values
+    n     = len(close)
+
+    dire = np.zeros(n, dtype=int)
+
+    if n < 3:
+        return dire
+
+    # Initialise on bar 1 using first 2 bars
+    if close[1] >= close[0]:
+        dire[1] = 1
+        sar      = min(low[0], low[1])
+        ep       = max(high[0], high[1])
+    else:
+        dire[1] = -1
+        sar      = max(high[0], high[1])
+        ep       = min(low[0], low[1])
+
+    af = PSAR_START
+
+    for i in range(2, n):
+        prev_dir = dire[i - 1]
+
+        if prev_dir == 1:                          # ── Bullish ──────────────
+            new_sar = sar + af * (ep - sar)
+            new_sar = min(new_sar, low[i - 1], low[i - 2])
+
+            if low[i] < new_sar:                   # reversal → bearish
+                dire[i] = -1
+                sar      = ep
+                ep       = low[i]
+                af       = PSAR_START
+            else:
+                dire[i] = 1
+                sar      = new_sar
+                if high[i] > ep:
+                    ep = high[i]
+                    af = min(af + PSAR_STEP, PSAR_MAX)
+
+        else:                                      # ── Bearish ──────────────
+            new_sar = sar - af * (sar - ep)
+            new_sar = max(new_sar, high[i - 1], high[i - 2])
+
+            if high[i] > new_sar:                  # reversal → bullish
+                dire[i] = 1
+                sar      = ep
+                ep       = high[i]
+                af       = PSAR_START
+            else:
+                dire[i] = -1
+                sar      = new_sar
+                if low[i] < ep:
+                    ep = low[i]
+                    af = min(af + PSAR_STEP, PSAR_MAX)
+
+    return dire
 
 
-def _supertrend(df: pd.DataFrame, period: int, mult: float) -> np.ndarray:
-    """Returns direction array: +1 bullish, -1 bearish, 0 undefined."""
-    c   = df["close"].values
-    hl2 = (df["high"].values + df["low"].values) / 2
-    atr = _atr(df, period)
-    n   = len(c)
-    fu  = (hl2 + mult * atr).copy()
-    fl  = (hl2 - mult * atr).copy()
-    d   = np.zeros(n, dtype=int)
-
-    for i in range(1, n):
-        if np.isnan(atr[i]):
-            continue
-        fu[i] = min(fu[i], fu[i-1]) if c[i-1] <= fu[i-1] else fu[i]
-        fl[i] = max(fl[i], fl[i-1]) if c[i-1] >= fl[i-1] else fl[i]
-        if d[i-1] == -1:
-            d[i] = 1  if c[i] > fu[i-1] else -1
-        else:
-            d[i] = -1 if c[i] < fl[i-1] else 1
-
-    return d
-
-
-def _macd_hist(close: np.ndarray, fast: int, slow: int, sig: int) -> np.ndarray:
+def _macd_hist(close: np.ndarray) -> np.ndarray:
     def ema(x, p):
         out = np.full(len(x), np.nan)
-        out[p-1] = x[:p].mean()
+        out[p - 1] = x[:p].mean()
         a = 2 / (p + 1)
         for i in range(p, len(x)):
-            out[i] = out[i-1] * (1 - a) + x[i] * a
+            out[i] = out[i - 1] * (1 - a) + x[i] * a
         return out
-    m = ema(close, fast) - ema(close, slow)
-    s = ema(np.nan_to_num(m, nan=0.0), sig)
-    return m - s
+
+    macd_line = ema(close, MACD_FAST) - ema(close, MACD_SLOW)
+    sig_line  = ema(np.nan_to_num(macd_line, nan=0.0), MACD_SIG)
+    return macd_line - sig_line
 
 
 def compute_signal(df: pd.DataFrame) -> tuple[str, dict]:
@@ -65,38 +103,40 @@ def compute_signal(df: pd.DataFrame) -> tuple[str, dict]:
     signal : 'buy' | 'sell' | 'hold'
     debug  : dict of indicator values for logging
     """
-    if len(df) < max(ATR_PERIOD + 20, MACD_SLOW + MACD_SIG + 5):
+    min_bars = max(PSAR_START and 10, MACD_SLOW + MACD_SIG + 5)
+    if len(df) < min_bars:
         return "hold", {"reason": "insufficient data"}
 
-    st   = _supertrend(df, ATR_PERIOD, ST_MULT)
-    hist = _macd_hist(df["close"].values, MACD_FAST, MACD_SLOW, MACD_SIG)
+    dire = _psar(df)
+    hist = _macd_hist(df["close"].values)
 
-    i    = len(df) - 1          # last completed bar index
-    ip   = i - 1                # previous bar
+    i  = len(df) - 1      # last completed bar
+    ip = i - 1            # previous bar
 
-    st_now,  st_prev  = st[i],   st[ip]
-    h_now,   h_prev   = hist[i], hist[ip]
+    d_now,  d_prev  = dire[i],  dire[ip]
+    h_now,  h_prev  = hist[i],  hist[ip]
 
-    st_flip_bull = (st_prev != 1)  and (st_now == 1)
-    st_flip_bear = (st_prev != -1) and (st_now == -1)
-    macd_flip_neg = (not np.isnan(h_now)) and (not np.isnan(h_prev)) and (h_prev >= 0) and (h_now < 0)
-    macd_positive = (not np.isnan(h_now)) and (h_now > 0)
+    psar_flip_bull = (d_prev != 1)  and (d_now == 1)
+    psar_flip_bear = (d_prev != -1) and (d_now == -1)
+    macd_positive  = (not np.isnan(h_now)) and (h_now > 0)
+    macd_flip_neg  = (not np.isnan(h_now)) and (not np.isnan(h_prev)) \
+                     and (h_prev >= 0) and (h_now < 0)
 
     debug = {
-        "close":         float(df["close"].iloc[-1]),
-        "st_direction":  int(st_now),
-        "st_flip_bull":  st_flip_bull,
-        "st_flip_bear":  st_flip_bear,
-        "macd_hist":     float(h_now) if not np.isnan(h_now) else None,
-        "macd_flip_neg": macd_flip_neg,
-        "macd_positive": macd_positive,
+        "close":          float(df["close"].iloc[-1]),
+        "psar_direction": int(d_now),
+        "psar_flip_bull": bool(psar_flip_bull),
+        "psar_flip_bear": bool(psar_flip_bear),
+        "macd_hist":      float(h_now) if not np.isnan(h_now) else None,
+        "macd_flip_neg":  bool(macd_flip_neg),
+        "macd_positive":  bool(macd_positive),
     }
 
-    if st_flip_bull and macd_positive:
-        return "buy", {**debug, "reason": "ST bullish flip + MACD positive"}
+    if psar_flip_bull and macd_positive:
+        return "buy", {**debug, "reason": "PSAR bullish flip + MACD positive"}
 
-    if st_flip_bear or macd_flip_neg:
-        reason = "ST bearish flip" if st_flip_bear else "MACD turned negative"
+    if psar_flip_bear or macd_flip_neg:
+        reason = "PSAR bearish flip" if psar_flip_bear else "MACD turned negative"
         return "sell", {**debug, "reason": reason}
 
     return "hold", {**debug, "reason": "no signal"}

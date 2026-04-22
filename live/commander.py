@@ -146,7 +146,8 @@ def _poll_loop():
     mode = "DRY-RUN" if DRY_RUN else "LIVE"
     log.info("Telegram command listener started")
     _send(
-        f"🤖 <b>HYPE Bot online</b>  [{mode}]\n\n"
+        f"🤖 <b>HYPE Bot online</b>  [{mode}]\n"
+        f"Strategy: PSAR(0.02/0.01/0.2) + MACD(8,26,7)\n\n"
         "Commands:\n"
         "/status    — position &amp; PnL\n"
         "/close     — force-close position\n"

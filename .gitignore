@@ -1,0 +1,26 @@
+# ── Data files (large CSVs, regenerate with indexer.py) ──────────────────────
+data/
+*.csv
+
+# ── Live bot secrets & runtime state ─────────────────────────────────────────
+live/.env
+live/data/
+live/state.json
+live/bot.log
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# ── OS / editor ───────────────────────────────────────────────────────────────
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/

@@ -138,7 +138,7 @@ def main():
     mode = "DRY-RUN" if config.DRY_RUN else "⚠️  LIVE TRADING"
     log.info("=" * 60)
     log.info(f"  HYPE/USDC Bot  |  {mode}")
-    log.info(f"  Strategy : ST(ATR{config.ATR_PERIOD}/×{config.ST_MULT})"
+    log.info(f"  Strategy : PSAR(start={config.PSAR_START}, step={config.PSAR_STEP}, max={config.PSAR_MAX})"
              f" + MACD({config.MACD_FAST},{config.MACD_SLOW},{config.MACD_SIG})")
     log.info(f"  Capital  : ${config.TOTAL_CAPITAL_USDC:,.0f} USDC"
              f"  |  Max position: ${config.MAX_POSITION_USDC:,.0f}")

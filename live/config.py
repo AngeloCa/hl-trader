@@ -15,18 +15,26 @@ COIN          = "HYPE"
 INTERVAL      = "4h"
 LOOKBACK_BARS = 150                    # bars to fetch for indicator warmup
 
-# ── Strategy params (must match optimised values exactly) ─────────────────────
-ATR_PERIOD    = 7
-ST_MULT       = 1.5
+# ── Market type & leverage guard ──────────────────────────────────────────────
+# "spot"  → HYPE/USDC spot, no leverage, no liquidation
+# "perp"  → perpetual futures; PERP_LEVERAGE is ENFORCED before every order
+MARKET_TYPE   = "spot"
+PERP_LEVERAGE = 1                      # NEVER change this — 1x only, no liquidation risk
+
+# ── Strategy params — PSAR + MACD (optimised OOS Sharpe 6.06) ────────────────
+PSAR_START    = 0.02                  # AF initial value (Wilder standard)
+PSAR_STEP     = 0.01                  # AF increment per new extreme
+PSAR_MAX      = 0.2                   # AF ceiling
 MACD_FAST     = 8
-MACD_SLOW     = 21
-MACD_SIG      = 9
+MACD_SLOW     = 26
+MACD_SIG      = 7
 
 # ── Risk & sizing ─────────────────────────────────────────────────────────────
 TOTAL_CAPITAL_USDC  = 1_000.0         # total allocated capital
 DEPLOY_FRACTION     = 0.95            # % of capital to deploy per trade
-FEE_BUFFER_USDC     = 5.0            # keep aside for fees
+FEE_BUFFER_USDC     = 5.0             # keep aside for fees
 MAX_POSITION_USDC   = TOTAL_CAPITAL_USDC * DEPLOY_FRACTION - FEE_BUFFER_USDC
+MAX_ORDER_USDC      = 10_000.0        # hard cap — order rejected if notional exceeds this
 SLIPPAGE_PCT        = 0.003           # 0.3% aggressive limit to ensure fill
 MIN_ORDER_USDC      = 10.0            # don't trade below this (dust)
 
